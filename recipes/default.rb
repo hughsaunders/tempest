@@ -43,7 +43,7 @@ end
 
 ks_admin_endpoint = get_access_endpoint("keystone-api", "keystone", "admin-api")
 ks_service_endpoint = get_access_endpoint("keystone-api", "keystone", "service-api")
-keystone = get_settings_by_role("keystone", "keystone")
+keystone = get_settings_by_role("keystone-setup", "keystone")
 glance_api = get_access_endpoint("glance-api", "glance","api")
 
 # Register tempest tenant for user#1
@@ -174,7 +174,7 @@ end
 
 ks_admin_endpoint = get_access_endpoint("keystone-api", "keystone", "admin-api")
 ks_service_endpoint = get_access_endpoint("keystone-api", "keystone", "service-api")
-keystone = get_settings_by_role("keystone", "keystone")
+keystone = get_settings_by_role("keystone-setup", "keystone")
 glance_api = get_access_endpoint("glance-api", "glance","api")
 
 template "/opt/tempest/monitoring.sh" do
