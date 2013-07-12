@@ -1,3 +1,4 @@
+name              "tempest"
 maintainer        "Rackspace Hosting, Inc."
 license           "Apache 2.0"
 description       "tempest module"
