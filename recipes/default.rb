@@ -21,11 +21,13 @@
 if not node['package_component'].nil?
   release = node['package_component']
 else
-  release = "folsom"
+  release = "grizzly"
 end
 
 # set the git branch to use for the tests
 case release
+when "grizzly"
+  node.set_unless['tempest']['branch'] = "stable/grizzly"  
 when "folsom"
   node.set_unless['tempest']['branch'] = "stable/folsom"
 when "essex-final"
@@ -35,7 +37,26 @@ else
   node.set_unless['tempest']['branch'] = "master"
 end
 
-%w{git python-unittest2 python-nose python-httplib2 python-paramiko python-testtools python-testresources python-novaclient python-glanceclient}.each do |pkg|
+
+#do we need python-testresources ??? centos doenst have this package
+case node["platform_family"]
+when "debian"
+  # do things on debian-ish platforms (debian, ubuntu, linuxmint)
+  %w{python-dev libxml2 libxslt1-dev libpq-dev}.each do |pkg|
+    package pkg do
+      action :install
+    end
+  end
+when "rhel"
+  # do things on RHEL platforms (redhat, centos, scientific, etc)
+  %w{libxslt-devel postgresql-devel}.each do |pkg|
+    package pkg do
+      action :install
+    end
+  end
+end
+
+%w{git python-unittest2 python-nose python-httplib2 python-paramiko python-testtools python-novaclient python-glanceclient}.each do |pkg|
   package pkg do
     action :install
   end
@@ -55,7 +76,7 @@ keystone_tenant "Register tempest tenant#1" do
   auth_token keystone["admin_token"]
   tenant_name node["tempest"]["user1_tenant"]
   tenant_description "Tempest Monitoring Tenant #1"
-  tenant_enabled "true" # Not required as this is the default
+  tenant_enabled true # Not required as this is the default
   action :create
 end
 
@@ -69,7 +90,7 @@ keystone_user "Register tempest user #1" do
   tenant_name node["tempest"]["user1_tenant"]
   user_name node["tempest"]["user1"]
   user_pass node["tempest"]["user1_pass"]
-  user_enabled "true" # Not required as this is the default
+  user_enabled true # Not required as this is the default
   action :create
 end
 
@@ -96,7 +117,7 @@ if release == "grizzly"
     auth_token keystone["admin_token"]
     tenant_name node["tempest"]["user2_tenant"]
     tenant_description "Tempest Monitoring Tenant #2"
-    tenant_enabled "true" # Not required as this is the default
+    tenant_enabled true # Not required as this is the default
     action :create
   end
 
@@ -110,7 +131,7 @@ if release == "grizzly"
     tenant_name node["tempest"]["user2_tenant"]
     user_name node["tempest"]["user2"]
     user_pass node["tempest"]["user2_pass"]
-    user_enabled "true" # Not required as this is the default
+    user_enabled true # Not required as this is the default
     action :create
   end
 
@@ -187,8 +208,12 @@ template "/opt/tempest/monitoring.sh" do
 end
 
 # this is placed in a ruby block so we can use a notify when the image is updated and we can get the uuid of the image
-node.run_state['tempest_img1_uuid'] = "undefined in the cookbook"
-node.run_state['tempest_img2_uuid'] = "undefined in the cookbook"
+
+if node['tempest']['test_img1']['id'].nil?
+  Chef::Log.info "************************************************************"
+  Chef::Log.info "************************************************************"
+end
+
 if node['tempest']['test_img1']['id'].nil?
   ruby_block "get_image1_uuid" do
     action :create
@@ -200,14 +225,20 @@ if node['tempest']['test_img1']['id'].nil?
       img1_uuid.delete("\n")
       if img1_uuid.length > 0
         # guard against a failure in getting the UUID of the image.
-        node.set['tempest']['test_img1']['id'] = img1_uuid
-        node.run_state['tempest_img1_uuid'] = img1_uuid
+        node.set["tempest"]["tempest_img1_uuid"] = img1_uuid
+      else
+        node.set["tempest"]["tempest_img1_uuid"] = "Failed to get uploaded image id"
       end
     end
   end
 else
-  node.run_state['tempest_img1_uuid'] = node['tempest']['test_img1']['id']
+  node.set["tempest"]["tempest_img1_uuid"] = node['tempest']['test_img1']['id']
 end
+
+if not node["keystone"]["users"][node["keystone"]["admin_user"]]["password"].nil?
+  node.set["tempest"]["admin_pass"] = node["keystone"]["users"][keystone["admin_user"]]["password"]
+end
+node.save
 
 
 template "/opt/tempest/etc/tempest.conf" do
@@ -235,7 +266,9 @@ template "/opt/tempest/etc/tempest.conf" do
             "tempest_ssh_user" => node["tempest"]["ssh_user"],
             "tempest_user2" => node["tempest"]["user2"],
             "tempest_user2_pass" => node["tempest"]["user2_pass"],
-            "tempest_user2_tenant" => node["tempest"]["user2_tenant"]
+            "tempest_user2_tenant" => node["tempest"]["user2_tenant"],
+            "tempest_img_ref1" => node["tempest"]["tempest_img1_uuid"],
+            "tempest_img_ref2" => node["tempest"]["tempest_img1_uuid"]
             })
 end
 

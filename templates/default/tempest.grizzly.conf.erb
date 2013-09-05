@@ -4,7 +4,7 @@ catalog_type = identity
 
 disable_ssl_certificate_validation = <%= @tempest_use_ssl %>
 
-uri = <%= @keystone_access_point %>:<%= @keystone_port %>/v2.0/
+uri = http://<%= @keystone_access_point %>:<%= @keystone_port %>/v2.0/
 
 strategy = keystone
 
