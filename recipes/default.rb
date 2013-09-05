@@ -37,18 +37,14 @@ else
   node.set_unless['tempest']['branch'] = "master"
 end
 
-
-#do we need python-testresources ??? centos doenst have this package
 case node["platform_family"]
 when "debian"
-  # do things on debian-ish platforms (debian, ubuntu, linuxmint)
   %w{python-dev libxml2 libxslt1-dev libpq-dev}.each do |pkg|
     package pkg do
       action :install
     end
   end
 when "rhel"
-  # do things on RHEL platforms (redhat, centos, scientific, etc)
   %w{libxslt-devel postgresql-devel}.each do |pkg|
     package pkg do
       action :install
@@ -208,12 +204,6 @@ template "/opt/tempest/monitoring.sh" do
 end
 
 # this is placed in a ruby block so we can use a notify when the image is updated and we can get the uuid of the image
-
-if node['tempest']['test_img1']['id'].nil?
-  Chef::Log.info "************************************************************"
-  Chef::Log.info "************************************************************"
-end
-
 if node['tempest']['test_img1']['id'].nil?
   ruby_block "get_image1_uuid" do
     action :create
