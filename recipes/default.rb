@@ -151,20 +151,10 @@ execute "clean_tempest_checkout" do
   action :nothing
 end
 
-execute "checkout_tempest" do
-  command "git checkout stable/havana"
-  cwd "/opt/tempest"
-  user "root"
-  action :nothing
-end
-
-execute "clone_tempest" do
-  command "git clone https://github.com/openstack/tempest"
-  cwd "/opt"
-  user "root"
-  not_if do File.exists?("/opt/tempest") end
-  notifies :run, "execute[checkout_tempest]", :immediately
-  notifies :run, "execute[clean_tempest_checkout]", :immediately
+git "/opt/tempest" do
+  repository "https://github.com/openstack/tempest"
+  reference "stable/havana"
+  action :sync
 end
 
 ks_admin_endpoint = get_access_endpoint("keystone-api", "keystone", "admin-api")
