@@ -17,26 +17,6 @@
 # limitations under the License.
 
 
-# set the package component so we know what version of openstack we are installing
-if not node['package_component'].nil?
-  release = node['package_component']
-else
-  release = "grizzly"
-end
-
-# set the git branch to use for the tests
-case release
-when "grizzly"
-  node.set_unless['tempest']['branch'] = "stable/grizzly"  
-when "folsom"
-  node.set_unless['tempest']['branch'] = "stable/folsom"
-when "essex-final"
-  node.set_unless['tempest']['branch'] = "stable/essex"
-else
-  # fall through for the ones that we have not yet defined
-  node.set_unless['tempest']['branch'] = "master"
-end
-
 case node["platform_family"]
 when "debian"
   %w{python-dev libxml2 libxslt1-dev libpq-dev}.each do |pkg|
@@ -52,7 +32,7 @@ when "rhel"
   end
 end
 
-%w{git python-unittest2 python-nose python-httplib2 python-paramiko python-testtools python-novaclient python-glanceclient}.each do |pkg|
+%w{git python-unittest2 python-nose python-httplib2 python-paramiko python-testtools python-novaclient python-glanceclient testrepository python-testresources}.each do |pkg|
   package pkg do
     action :install
   end
@@ -103,46 +83,44 @@ keystone_role "Grant 'member' Role to tempest user for tempest tenant#1" do
   action :grant
 end
 
-if release == "grizzly"
-  # Register tempest tenant for user#2
-  keystone_tenant "Register tempest tenant#2" do
-    auth_host ks_admin_endpoint["host"]
-    auth_port ks_admin_endpoint["port"]
-    auth_protocol ks_admin_endpoint["scheme"]
-    api_ver ks_admin_endpoint["path"]
-    auth_token keystone["admin_token"]
-    tenant_name node["tempest"]["user2_tenant"]
-    tenant_description "Tempest Monitoring Tenant #2"
-    tenant_enabled true # Not required as this is the default
-    action :create
-  end
+# Register tempest tenant for user#2
+keystone_tenant "Register tempest tenant#2" do
+  auth_host ks_admin_endpoint["host"]
+  auth_port ks_admin_endpoint["port"]
+  auth_protocol ks_admin_endpoint["scheme"]
+  api_ver ks_admin_endpoint["path"]
+  auth_token keystone["admin_token"]
+  tenant_name node["tempest"]["user2_tenant"]
+  tenant_description "Tempest Monitoring Tenant #2"
+  tenant_enabled true # Not required as this is the default
+  action :create
+end
 
-  # Register tempest user#2
-  keystone_user "Register tempest user#2" do
-    auth_host ks_admin_endpoint["host"]
-    auth_port ks_admin_endpoint["port"]
-    auth_protocol ks_admin_endpoint["scheme"]
-    api_ver ks_admin_endpoint["path"]
-    auth_token keystone["admin_token"]
-    tenant_name node["tempest"]["user2_tenant"]
-    user_name node["tempest"]["user2"]
-    user_pass node["tempest"]["user2_pass"]
-    user_enabled true # Not required as this is the default
-    action :create
-  end
+# Register tempest user#2
+keystone_user "Register tempest user#2" do
+  auth_host ks_admin_endpoint["host"]
+  auth_port ks_admin_endpoint["port"]
+  auth_protocol ks_admin_endpoint["scheme"]
+  api_ver ks_admin_endpoint["path"]
+  auth_token keystone["admin_token"]
+  tenant_name node["tempest"]["user2_tenant"]
+  user_name node["tempest"]["user2"]
+  user_pass node["tempest"]["user2_pass"]
+  user_enabled true # Not required as this is the default
+  action :create
+end
 
-  ## Grant Member role to Tempest user#2 for tempest tenant
-  keystone_role "Grant 'member' Role to tempest user#2 for tempest tenant#2" do
-    auth_host ks_admin_endpoint["host"]
-    auth_port ks_admin_endpoint["port"]
-    auth_protocol ks_admin_endpoint["scheme"]
-    api_ver ks_admin_endpoint["path"]
-    auth_token keystone["admin_token"]
-    tenant_name node["tempest"]["user2_tenant"]
-    user_name node["tempest"]["user2"]
-    role_name "Member"
-    action :grant
-  end
+## Grant Member role to Tempest user#2 for tempest tenant
+keystone_role "Grant 'member' Role to tempest user#2 for tempest tenant#2" do
+  auth_host ks_admin_endpoint["host"]
+  auth_port ks_admin_endpoint["port"]
+  auth_protocol ks_admin_endpoint["scheme"]
+  api_ver ks_admin_endpoint["path"]
+  auth_token keystone["admin_token"]
+  tenant_name node["tempest"]["user2_tenant"]
+  user_name node["tempest"]["user2"]
+  role_name "Member"
+  action :grant
 end
 
 # need to check that this is running on a node where glance is.  presumably
@@ -173,20 +151,10 @@ execute "clean_tempest_checkout" do
   action :nothing
 end
 
-execute "checkout_tempest" do
-  command "git checkout #{node['tempest']['branch']}"
-  cwd "/opt/tempest"
-  user "root"
-  action :nothing
-end
-
-execute "clone_tempest" do
-  command "git clone https://github.com/openstack/tempest"
-  cwd "/opt"
-  user "root"
-  not_if do File.exists?("/opt/tempest") end
-  notifies :run, "execute[checkout_tempest]", :immediately
-  notifies :run, "execute[clean_tempest_checkout]", :immediately
+git "/opt/tempest" do
+  repository "https://github.com/openstack/tempest"
+  reference "stable/havana"
+  action :sync
 end
 
 ks_admin_endpoint = get_access_endpoint("keystone-api", "keystone", "admin-api")
@@ -199,8 +167,7 @@ template "/opt/tempest/monitoring.sh" do
   owner "root"
   group "root"
   mode "0555"
-  variables("test_list" => node["tempest"]["runlist"][release])
-  only_if { !node["tempest"]["runlist"][release].nil? }
+  variables("test_list" => node["tempest"]["runlist"])
 end
 
 # this is placed in a ruby block so we can use a notify when the image is updated and we can get the uuid of the image
@@ -232,7 +199,7 @@ node.save
 
 
 template "/opt/tempest/etc/tempest.conf" do
-  source "tempest.#{release}.conf.erb"
+  source "tempest.conf.erb"
   owner "root"
   group "root"
   mode "0644"
@@ -260,14 +227,6 @@ template "/opt/tempest/etc/tempest.conf" do
             "tempest_img_ref1" => node["tempest"]["tempest_img1_uuid"],
             "tempest_img_ref2" => node["tempest"]["tempest_img1_uuid"]
             })
-end
-
-# This should only be needed until tempest corrects bug# 1046870
-execute "Activate tests" do
-  command "sed -i 's/raise nose.SkipTest(\"Until Bug 1046870 is fixed\")/#raise nose.SkipTest(\"Until Bug 1046870 is fixed\")/' test_images.py"
-  cwd "/opt/tempest/tempest/tests/compute/images"
-  user "root"
-  only_if { release == "grizzly" }
 end
 
 template "/etc/cron.d/tempest" do

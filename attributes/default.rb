@@ -18,11 +18,8 @@ default["tempest"]["img2_flavor"] = "2"                      # node_attribute
 default["tempest"]["admin"] = "admin"                        # node_attribute
 default["tempest"]["admin_pass"] = "secrete"                 # node_attribute
 default["tempest"]["admin_tenant"] = "admin"                 # node_attribute
-default["tempest"]["runlist"]["grizzly"] = ["tempest.tests.compute.images.test_images_oneserver",
-                                            "tempest.tests.image.v2.test_images"]
-default["tempest"]["runlist"]["folsom"] = ["tempest.tests.compute.test_create_server.py:ServersTestJSON.test_list_servers_with_detail",
-                                           "tempest.tests.compute.images.test_images.py:ImagesTestJSON.test_create_delete_image"]
-default["tempest"]["runlist"]["essex-final"] = nil
+default["tempest"]["runlist"] = ["tempest.tests.compute.images.test_images_oneserver",
+                                 "tempest.tests.image.v2.test_images"]
 # how often the tests are run. This is in minutes
 default["tempest"]["interval"] = "5"                         # node_attribute
 default["tempest"]["use_cron"] = false                       # node_attribute
