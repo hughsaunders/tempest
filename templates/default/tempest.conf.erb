@@ -2,9 +2,9 @@
 
 catalog_type = identity
 
-disable_ssl_certificate_validation = <%= @tempest_use_ssl %>
+disable_ssl_certificate_validation = <%= @disable_ssl_validation %>
 
-uri = http://<%= @keystone_access_point %>:<%= @keystone_port %>/v2.0/
+uri = http://<%= @identity_endpoint_host %>:<%= @identity_endpoint_port %>/v2.0/
 
 strategy = keystone
 
