@@ -140,12 +140,15 @@ if node['openstack']['tempest']['test_img1']['id'].nil?
   ruby_block 'get_image1_uuid' do
     action :create
     block do
-      shell_cmd = "nova --no-cache --os-username=#{node['openstack']['tempest']['user1']['user_name']} "\
-                  +"--os-password=#{node['openstack']['tempest']['user1']['password']} "
-                  +"--os-tenant-name=#{node['openstack']['tempest']['user1']['tenant_name']} "\
-                  +"--os-auth-url=#{identity_admin_endpoint.to_s} "\
-                  +"image-show cirros-#{node['openstack']['tempest']['user1']['tenant_name']}-image "\
-                  +"| awk '{if($2==\'id\') print $4}'"
+      shell_cmd = %Q[
+nova\
+    --no-cache --os-username=#{node['openstack']['tempest']['user1']['user_name']} \
+    --os-password=#{node['openstack']['tempest']['user1']['password']} \
+    --os-tenant-name=#{node['openstack']['tempest']['user1']['tenant_name']} \
+    --os-auth-url=#{identity_admin_endpoint.to_s} "\
+    image-show cirros-#{node['openstack']['tempest']['user1']['tenant_name']}-image \
+| awk '{if($2==\'id\') print $4}'
+]
       img1_uuid_test = Mixlib::ShellOut.new(shell_cmd)
       img1_uuid_test.run_command
       img1_uuid = img1_uuid_test.stdout
