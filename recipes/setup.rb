@@ -140,7 +140,8 @@ if node['openstack']['tempest']['test_img1']['id'].nil?
   ruby_block 'get_image1_uuid' do
     action :create
     block do
-      shell_cmd = "source /root/openrc admin admin; nova image-show cirros-image | awk '{if($2==\'id\') print $4}'"
+      cirros_image_name = node['openstack']['image']['upload_images'].select {|image_name| image_name =~ /cirros/ }.first
+      shell_cmd = "source /root/openrc admin admin; nova image-show #{cirros_image_name} | awk '$2 ~ /^\s*id\s*$/{print $4}'"
       img1_uuid_test = Mixlib::ShellOut.new(shell_cmd)
       img1_uuid_test.run_command
       img1_uuid = img1_uuid_test.stdout
