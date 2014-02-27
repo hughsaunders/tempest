@@ -124,7 +124,7 @@ end
 
 git '/opt/tempest' do
   repository 'https://github.com/openstack/tempest'
-  reference 'stable/havana'
+  reference 'master'
   action :sync
 end
 
