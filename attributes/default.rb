@@ -19,7 +19,8 @@ default['openstack']['tempest'] = {
     'test_img1' => {
         'id' => nil,
         'url' => 'http://launchpadlibrarian.net/83305348/cirros-0.3.0-x86_64-disk.img',
-        'flavor' => 1
+        'flavor' => 1,
+        'uuid' => nil
     },
     'admin' => 'admin',
     'admin_pass' => 'admin',
