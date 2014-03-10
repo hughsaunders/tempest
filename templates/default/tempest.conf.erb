@@ -66,6 +66,9 @@ use_block_migration_for_live_migration = False
 
 disk_config_enabled_override = true
 
+[identity-feature-enabled]
+api_v3 = false
+
 [whitebox]
 
 whitebox_enabled = false
@@ -84,6 +87,9 @@ db_uri =
 username = <%= @tempest_admin %>
 password = <%= @tempest_admin_pass %>
 tenant_name = <%= @tempest_admin_tenant %>
+
+[compute-feature-enabled]
+api_v3 = false
 
 [image]
 catalog_type = image
@@ -112,6 +118,7 @@ quantum_available = false
 catalog_type = volume
 build_interval = 3
 build_timeout = 400
+backup = false
 
 [object-storage]
 
