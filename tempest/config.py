@@ -393,7 +393,11 @@ ImageGroup = [
     cfg.StrOpt('http_image',
                default='http://download.cirros-cloud.net/0.3.1/'
                'cirros-0.3.1-x86_64-uec.tar.gz',
-               help='http accessible image')
+               help='http accessible image'),
+    cfg.IntOpt('build_timeout',
+               default=300,
+               help="Timeout in seconds to wait for an image operation to "
+                    "complete.")
 ]
 
 image_feature_group = cfg.OptGroup(name='image-feature-enabled',

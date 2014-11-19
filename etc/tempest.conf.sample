@@ -650,6 +650,9 @@
 # the first found one is used. (string value)
 #region =
 
+# Timeout in seconds to wait for an image operation to complete.
+#build_timeout = 300
+
 
 [image-feature-enabled]
 

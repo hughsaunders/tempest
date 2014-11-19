@@ -37,6 +37,7 @@ class ImageClientJSON(rest_client.RestClient):
     def __init__(self, auth_provider):
         super(ImageClientJSON, self).__init__(auth_provider)
         self.service = CONF.image.catalog_type
+        self.build_timeout = CONF.image.build_timeout
         self._http = None
 
     def _image_meta_from_headers(self, headers):

@@ -33,7 +33,7 @@ class ImagesClientXML(rest_client.RestClient):
         super(ImagesClientXML, self).__init__(auth_provider)
         self.service = CONF.compute.catalog_type
         self.build_interval = CONF.compute.build_interval
-        self.build_timeout = CONF.compute.build_timeout
+        self.build_timeout = CONF.image.build_timeout
 
     def _parse_server(self, node):
         data = xml_utils.xml_to_json(node)

@@ -31,7 +31,7 @@ class ImagesClientJSON(rest_client.RestClient):
         super(ImagesClientJSON, self).__init__(auth_provider)
         self.service = CONF.compute.catalog_type
         self.build_interval = CONF.compute.build_interval
-        self.build_timeout = CONF.compute.build_timeout
+        self.build_timeout = CONF.image.build_timeout
 
     def create_image(self, server_id, name, meta=None):
         """Creates an image of the original server."""
